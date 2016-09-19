@@ -1,0 +1,4 @@
+#!/bin/bash
+
+exec es $(dirname $0)/${STEP:-stepA_mal}.js "${@}"
+
