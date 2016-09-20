@@ -17,7 +17,7 @@ let strip_meta = list => list.map(([value]) => value)
 
 let READ = s => read_str(s)
 
-let EVAL_AST = (ast, env) => {
+let RESOLVE_AST = (ast, env) => {
 	let [value, type] = ast
 	switch (type) {
 		case types.symbol:
@@ -29,6 +29,16 @@ let EVAL_AST = (ast, env) => {
 			return data
 		case types.list:
 			return [value.map(x => EVAL(x, env)), type]
+		case types.vector:
+			return [value.map(x => EVAL(x, env)), type]
+		case types.map:
+			let resolved = {}
+			for (let k in value) {
+				if (value.hasOwnProperty(k)) {
+					resolved[k] = EVAL(value[k], env)
+				}
+			}
+			return [resolved, type]
 		default:
 			return ast
 	}
@@ -38,13 +48,13 @@ let EVAL = (ast, env) => {
 	let [value, type] = ast
 	if (type === types.list) {
 		if (value.length > 0) {
-			let [[[op, optype], ...args]] = EVAL_AST(ast, env)
+			let [[[op, optype], ...args]] = RESOLVE_AST(ast, env)
 			return [op(...strip_meta(args)), optype]
 		} else {
 			return ast
 		}
 	} else {
-		return EVAL_AST(ast, env)
+		return RESOLVE_AST(ast, env)
 	}
 }
 
