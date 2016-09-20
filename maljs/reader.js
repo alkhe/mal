@@ -1,4 +1,4 @@
-import types from './types'
+import types, { unit } from './types'
 
 let log = ::console.log
 
@@ -29,7 +29,7 @@ let tokenizer = s => {
 
 let read_form = reader => {
 	let t = reader.peek()
-
+	
 	switch (t) {
 		case undefined:
 			throw 'got EOF'
@@ -66,7 +66,7 @@ let read_list = reader => {
 
 	reader.next()
 
-	return [elements, types.list]
+	return unit(elements, types.list)
 }
 
 let read_vector = reader => {
@@ -79,7 +79,7 @@ let read_vector = reader => {
 
 	reader.next()
 
-	return [elements, types.vector]
+	return unit(elements, types.vector)
 }
 
 let read_map = reader => {
@@ -87,51 +87,51 @@ let read_map = reader => {
 	let map = {}
 
 	for (let t = reader.peek(); t !== '}'; t = reader.peek()) {
-		let key = read_form(reader)[0]
+		let key = read_form(reader).value
 		map[key] = read_form(reader)
 	}
 
 	reader.next()
 
-	return [map, types.map]
+	return unit(map, types.map)
 }
 
-let quote_node = [Symbol.for('quote'), types.symbol]
+let quote_node = unit(Symbol.for('quote'), types.symbol)
 
 let read_quote = reader => {
 	reader.next()
-	return [[quote_node, read_form(reader)], types.list]
+	return unit([quote_node, read_form(reader)], types.list)
 }
 
-let quasiquote_node = [Symbol.for('quasiquote'), types.symbol]
+let quasiquote_node = unit(Symbol.for('quasiquote'), types.symbol)
 
 let read_quasiquote = reader => {
 	reader.next()
-	return [[quasiquote_node, read_form(reader)], types.list]
+	return unit([quasiquote_node, read_form(reader)], types.list)
 }
 
-let unquote_node = [Symbol.for('unquote'), types.symbol]
+let unquote_node = unit(Symbol.for('unquote'), types.symbol)
 
 let read_unquote = reader => {
 	reader.next()
-	return [[unquote_node, read_form(reader)], types.list]
+	return unit([unquote_node, read_form(reader)], types.list)
 }
 
-let splice_unquote_node = [Symbol.for('splice-unquote'), types.symbol]
+let splice_unquote_node = unit(Symbol.for('splice-unquote'), types.symbol)
 
 let read_splice_unquote = reader => {
 	reader.next()
-	return [[splice_unquote_node, read_form(reader)], types.list]
+	return unit([splice_unquote_node, read_form(reader)], types.list)
 }
 
-let deref_node = [Symbol.for('deref'), types.symbol]
+let deref_node = unit(Symbol.for('deref'), types.symbol)
 
 let read_deref = reader => {
 	reader.next()
-	return [[deref_node, read_form(reader)], types.list]
+	return unit([deref_node, read_form(reader)], types.list)
 }
 
-let with_meta_node = [Symbol.for('with-meta'), types.symbol]
+let with_meta_node = unit(Symbol.for('with-meta'), types.symbol)
 
 let read_with_meta = reader => {
 	reader.next()
@@ -139,7 +139,7 @@ let read_with_meta = reader => {
 	let meta = read_form(reader)
 	let obj = read_form(reader)
 
-	return [[with_meta_node, obj, meta], types.list]
+	return unit([with_meta_node, obj, meta], types.list)
 }
 
 let parse_string = t => {
@@ -180,21 +180,21 @@ let read_atom = reader => {
 	let t = reader.next()
 
 	if (t[0] === '"') {
-		return [parse_string(t), types.string]
+		return unit(parse_string(t), types.string)
 	} else if (t[0] === ':') {
-		return ['\u0000' + t, types.keyword]
+		return unit('\u0000' + t, types.keyword)
 	} else if (t.match(/^-?[0-9]+$/)) {
-		return [parseInt(t, 10), types.number]
+		return unit(parseInt(t, 10), types.number)
 	} else {
 		switch (t) {
 			case 'nil':
-				return [null, types.nil]
+				return unit(null, types.nil)
 			case 'true':
-				return [true, types.bool]
+				return unit(true, types.bool)
 			case 'false':
-				return [false, types.bool]
+				return unit(false, types.bool)
 			default:
-				return [Symbol.for(t), types.symbol]
+				return unit(Symbol.for(t), types.symbol)
 		}
 	}
 }

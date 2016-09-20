@@ -1,6 +1,6 @@
 import types from './types'
 
-let pr_str = ([value, type], print_readably) => {
+let pr_str = ({ value, type }, print_readably) => {
 	switch (type) {
 		case types.symbol:
 			return Symbol.keyFor(value)

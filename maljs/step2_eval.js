@@ -1,24 +1,24 @@
 import { readline } from './readline'
 import read_str from './reader'
 import pr_str from './printer'
-import types from './types'
+import types, { unit } from './types'
 
 let log = ::console.log
 let { stdout } = process
 
 let ENV = {
-	'+': [(a, b) => a + b, types.number],
-	'-': [(a, b) => a - b, types.number],
-	'*': [(a, b) => a * b, types.number],
-	'/': [(a, b) => a / b | 0, types.number]
+	'+': unit((a, b) => a + b, types.number),
+	'-': unit((a, b) => a - b, types.number),
+	'*': unit((a, b) => a * b, types.number),
+	'/': unit((a, b) => a / b | 0, types.number)
 }
 
-let strip_meta = list => list.map(([value]) => value)
+let strip_meta = list => list.map(element => element.value)
 
 let READ = s => read_str(s)
 
 let RESOLVE_AST = (ast, env) => {
-	let [value, type] = ast
+	let { value, type } = ast
 	switch (type) {
 		case types.symbol:
 			let key = Symbol.keyFor(value)
@@ -28,9 +28,9 @@ let RESOLVE_AST = (ast, env) => {
 			}
 			return data
 		case types.list:
-			return [value.map(x => EVAL(x, env)), type]
+			return unit(value.map(x => EVAL(x, env)), type)
 		case types.vector:
-			return [value.map(x => EVAL(x, env)), type]
+			return unit(value.map(x => EVAL(x, env)), type)
 		case types.map:
 			let resolved = {}
 			for (let k in value) {
@@ -38,18 +38,18 @@ let RESOLVE_AST = (ast, env) => {
 					resolved[k] = EVAL(value[k], env)
 				}
 			}
-			return [resolved, type]
+			return unit(resolved, type)
 		default:
 			return ast
 	}
 }
 
 let EVAL = (ast, env) => {
-	let [value, type] = ast
+	let { value, type } = ast
 	if (type === types.list) {
 		if (value.length > 0) {
-			let [[[op, optype], ...args]] = RESOLVE_AST(ast, env)
-			return [op(...strip_meta(args)), optype]
+			let [{ value: op, type: optype }, ...args] = RESOLVE_AST(ast, env).value
+			return unit(op(...strip_meta(args)), optype)
 		} else {
 			return ast
 		}

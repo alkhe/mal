@@ -11,5 +11,6 @@ let types = {
 	debug: Symbol('debug')
 }
 
-export default types
+export let unit = (value, type) => ({ value, type })
 
+export default types
