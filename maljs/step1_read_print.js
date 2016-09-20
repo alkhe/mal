@@ -1,7 +1,7 @@
 import { readline } from './readline'
 import read_str from './reader'
 import pr_str from './printer'
-import { types } from './types'
+import types from './types'
 
 let log = ::console.log
 let { stdout } = process

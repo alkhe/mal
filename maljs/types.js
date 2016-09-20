@@ -11,5 +11,5 @@ let types = {
 	debug: Symbol('debug')
 }
 
-export { types }
+export default types
 

@@ -1,4 +1,4 @@
-import { types } from './types'
+import types from './types'
 
 let pr_str = ([value, type], print_readably) => {
 	switch (type) {
