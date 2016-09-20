@@ -1,4 +1,4 @@
 #!/bin/bash
 
-exec es $(dirname $0)/${STEP:-stepA_mal}.js "${@}"
+exec babel-node $(dirname $0)/${STEP:-stepA_mal}.js "${@}"
 
