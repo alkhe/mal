@@ -1,13 +1,12 @@
 import types from './types'
 
-export default outer => {
-	let data = {
-	}
+export default (outer = null, binds = [], exprs = []) => {
+	let symbols = {}
 
 	let env = {
-		set: (k, v) => data[k] = v,
+		set: (k, v) => symbols[k] = v,
 		find: k =>
-			data.hasOwnProperty(k)
+			symbols.hasOwnProperty(k)
 				? env
 			: outer
 				? outer.find(k)
@@ -20,9 +19,13 @@ export default outer => {
 				throw `${ k } not found`
 			}
 		},
-		unsafe_get: k => data[k],
-		initialize: d => data = d,
-		get_all: () => data
+		unsafe_get: k => symbols[k],
+		initialize: s => symbols = s,
+		get_all: () => symbols
+	}
+
+	for (let i = 0; i < binds.length; i++) {
+		env.set(binds[i], exprs[i])
 	}
 
 	return env

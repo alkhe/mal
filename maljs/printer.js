@@ -31,6 +31,8 @@ let pr_str = ({ value, type }, print_readably) => {
 				}
 			}
 			return `{${ serials.join(' ') }}`
+		case types.fn:
+			return '#<function>'
 		case types.debug:
 			return value
 		default:
