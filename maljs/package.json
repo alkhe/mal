@@ -14,7 +14,6 @@
     "babel-preset-stage-0": "^6.5.0"
   },
   "dependencies": {
-    "ffi": "^2.1.0",
-    "xstream": "^6.3.0"
+    "ffi": "^2.1.0"
   }
 }
