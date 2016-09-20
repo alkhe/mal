@@ -13,7 +13,7 @@ let RESOLVE_AST = (ast, env) => {
 	let { value, type } = ast
 	switch (type) {
 		case types.symbol:
-			return env.get(Symbol.keyFor(value))
+			return env.get(value)
 		case types.list:
 			return unit(value.map(x => EVAL(x, env)), type)
 		case types.vector:
@@ -35,13 +35,13 @@ let EVAL = (ast, env) => {
 	let { value, type } = ast
 	if (type === types.list) {
 		if (value.length > 0) {
-			let form_symbol = value[0].value
+			let form = value[0].value
 
-			switch (Symbol.keyFor(form_symbol)) {
+			switch (form) {
 				case 'def!':
 					let key = value[1].value
 					let assign_value = EVAL(value[2], env)
-					env.set(Symbol.keyFor(key), assign_value)
+					env.set(key, assign_value)
 					return assign_value
 				case 'let*':
 					let bindings = value[1].value
@@ -50,7 +50,7 @@ let EVAL = (ast, env) => {
 					for (let i = 0; i < bindings.length; i++) {
 						let key = bindings[i].value
 						let assign_value = EVAL(bindings[i + 1], child_env)
-						child_env.set(Symbol.keyFor(key), assign_value)
+						child_env.set(key, assign_value)
 						i++
 					}
 					return EVAL(expr, child_env)

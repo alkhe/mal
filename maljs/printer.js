@@ -3,7 +3,7 @@ import types from './types'
 let pr_str = ({ value, type }, print_readably) => {
 	switch (type) {
 		case types.symbol:
-			return Symbol.keyFor(value)
+			return value
 		case types.number:
 			return value.toString(10)
 		case types.nil:

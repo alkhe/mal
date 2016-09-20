@@ -96,42 +96,42 @@ let read_map = reader => {
 	return unit(map, types.map)
 }
 
-let quote_node = unit(Symbol.for('quote'), types.symbol)
+let quote_node = unit('quote', types.symbol)
 
 let read_quote = reader => {
 	reader.next()
 	return unit([quote_node, read_form(reader)], types.list)
 }
 
-let quasiquote_node = unit(Symbol.for('quasiquote'), types.symbol)
+let quasiquote_node = unit('quasiquote', types.symbol)
 
 let read_quasiquote = reader => {
 	reader.next()
 	return unit([quasiquote_node, read_form(reader)], types.list)
 }
 
-let unquote_node = unit(Symbol.for('unquote'), types.symbol)
+let unquote_node = unit('unquote', types.symbol)
 
 let read_unquote = reader => {
 	reader.next()
 	return unit([unquote_node, read_form(reader)], types.list)
 }
 
-let splice_unquote_node = unit(Symbol.for('splice-unquote'), types.symbol)
+let splice_unquote_node = unit('splice-unquote', types.symbol)
 
 let read_splice_unquote = reader => {
 	reader.next()
 	return unit([splice_unquote_node, read_form(reader)], types.list)
 }
 
-let deref_node = unit(Symbol.for('deref'), types.symbol)
+let deref_node = unit('deref', types.symbol)
 
 let read_deref = reader => {
 	reader.next()
 	return unit([deref_node, read_form(reader)], types.list)
 }
 
-let with_meta_node = unit(Symbol.for('with-meta'), types.symbol)
+let with_meta_node = unit('with-meta', types.symbol)
 
 let read_with_meta = reader => {
 	reader.next()
@@ -194,7 +194,7 @@ let read_atom = reader => {
 			case 'false':
 				return unit(false, types.bool)
 			default:
-				return unit(Symbol.for(t), types.symbol)
+				return unit(t, types.symbol)
 		}
 	}
 }

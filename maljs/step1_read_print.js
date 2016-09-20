@@ -10,7 +10,7 @@ let READ = s => {
 	try {
 		return read_str(s)
 	} catch (msg) {
-		return [msg, types.debug]
+		return unit(msg, types.debug)
 	}
 }
 

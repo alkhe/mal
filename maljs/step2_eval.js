@@ -21,10 +21,9 @@ let RESOLVE_AST = (ast, env) => {
 	let { value, type } = ast
 	switch (type) {
 		case types.symbol:
-			let key = Symbol.keyFor(value)
-			let data = env[key]
+			let data = env[value]
 			if (data == null) {
-				throw `${ key } not found`
+				throw `${ value } not found`
 			}
 			return data
 		case types.list:
