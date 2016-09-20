@@ -36,11 +36,12 @@ let pr_str = ({ value, type }, human) => {
 			}
 			return `{${ serials.join(' ') }}`
 		case types.fn:
+		case types.userfn:
 			return '#<function>'
 		case types.debug:
 			return value
 		default:
-			return 'bad AST\n'
+			throw Error('bad AST')
 	}
 }
 

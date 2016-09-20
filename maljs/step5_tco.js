@@ -46,51 +46,68 @@ let form_let = ([{ value: bindings }, Expr], env) => {
 		child_env.set(key, Value)
 		i++
 	}
-	return EVAL(Expr, child_env)
+	return [Expr, child_env]
 }
 
 let form_do = (args, env) => {
-	let Values = args.map(Expr => EVAL(Expr, env))
-	return Values[Values.length - 1]
+	let Statements = args.slice(0, args.length - 1)
+	let Expr = args[args.length - 1]
+	for (let s of Statements) {
+		EVAL(s, env)
+	}
+	return Expr
 }
 
 let form_if = ([Cond_Expr, True_Expr, False_Expr], env) => {
 	let { value: cond } = EVAL(Cond_Expr, env)
 	return !falsy(cond)
-		? EVAL(True_Expr, env)
+		? True_Expr
 		: False_Expr != null
-			? EVAL(False_Expr, env)
+			? False_Expr
 			: unit(null, types.nil)
 }
 
 let form_fn = ([{ value: Binds }, Expr], env) =>
-	fn((...args) => EVAL(Expr, create_env(env, Binds.map(x => x.value), args)))
+	unit({
+		ast: Expr,
+		params: Binds.map(x => x.value),
+		env
+	}, types.userfn)
 
 let EVAL = (ast, env) => {
-	let { value, type } = ast
-	if (type === types.list) {
-		if (value.length > 0) {
-			let [{ value: form }, ...args] = value
-			switch (form) {
-				case 'def!':
-					return form_def(args, env)
-				case 'let*':
-					return form_let(args, env)
-				case 'do':
-					return form_do(args, env)
-				case 'if':
-					return form_if(args, env)
-				case 'fn*':
-					return form_fn(args, env)
-				default:
-					let [{ value: op }, ...resolved_args] = RESOLVE_AST(ast, env).value
-					return op(...resolved_args)
+	while (true) {
+		if (ast.type === types.list) {
+			if (ast.value.length > 0) {
+				let [{ value: form }, ...args] = ast.value
+				switch (form) {
+					case 'def!':
+						return form_def(args, env)
+					case 'let*':
+						[ast, env] = form_let(args, env)
+						continue
+					case 'do':
+						ast = form_do(args, env)
+						continue
+					case 'if':
+						ast = form_if(args, env)
+						continue
+					case 'fn*':
+						return form_fn(args, env)
+					default:
+						let [{ value: f, type }, ...resolved_args] = RESOLVE_AST(ast, env).value
+						if (type === types.userfn) {
+							ast = f.ast
+							env = create_env(f.env, f.params, resolved_args)
+							continue
+						}
+						return f(...resolved_args)
+				}
+			} else {
+				return ast
 			}
 		} else {
-			return ast
+			return RESOLVE_AST(ast, env)
 		}
-	} else {
-		return RESOLVE_AST(ast, env)
 	}
 }
 

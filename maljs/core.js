@@ -1,9 +1,7 @@
-import types, { fn, compose, apply } from './types'
+import types, { fn, compose, apply, listy } from './types'
 import pr_str, { pretty, ugly } from './printer'
 
 let print = s => console.log(s)
-
-let listy = t => t === types.list || t === types.vector
 
 let _str_print = fn(({ value: s }) => {
 	print(s)

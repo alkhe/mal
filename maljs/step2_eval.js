@@ -31,11 +31,9 @@ let RESOLVE_AST = (ast, env) => {
 		case types.vector:
 			return unit(value.map(x => EVAL(x, env)), type)
 		case types.map:
-			let resolved = {}
-			for (let k in value) {
-				if (value.hasOwnProperty(k)) {
-					resolved[k] = EVAL(value[k], env)
-				}
+			let resolved = []
+			for (let [K, V] of value) {
+				resolved.push([K, EVAL(V, env)])
 			}
 			return unit(resolved, type)
 		default:

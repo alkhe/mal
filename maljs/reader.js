@@ -32,7 +32,7 @@ let read_form = reader => {
 	
 	switch (t) {
 		case undefined:
-			throw 'got EOF'
+			throw Error('got EOF')
 		case '(':
 			return read_list(reader)
 		case '[':
@@ -165,7 +165,7 @@ let parse_string = t => {
 					output += '\\'
 					break
 				default:
-					throw `bad string: ${ t }`
+					throw Error(`bad string: ${ t }`)
 			}
 
 			i++
