@@ -1,8 +1,11 @@
+import { readFileSync as read } from 'fs'
+
 import { readline } from './readline'
 import read_str from './reader'
 import pr_str from './printer'
 import types, { unit, fn } from './types'
 import create_env from './env'
+import core from './core'
 
 let log = ::console.log
 let { stdout } = process
@@ -19,11 +22,9 @@ let RESOLVE_AST = (ast, env) => {
 		case types.vector:
 			return unit(value.map(x => EVAL(x, env)), type)
 		case types.map:
-			let resolved = {}
-			for (let k in value) {
-				if (value.hasOwnProperty(k)) {
-					resolved[k] = EVAL(value[k], env)
-				}
+			let resolved = []
+			for (let [K, V] of value) {
+				resolved.push([K, EVAL(V, env)])
 			}
 			return unit(resolved, type)
 		default:
@@ -81,17 +82,17 @@ let EVAL = (ast, env) => {
 	}
 }
 
-let PRINT = (ast, print_readably) => pr_str(ast, print_readably)
-
-let repl_env = create_env()
-repl_env.initialize({
-	'+': fn(({ value: a }, { value: b }) => a + b, types.number),
-	'-': fn(({ value: a }, { value: b }) => a - b, types.number),
-	'*': fn(({ value: a }, { value: b }) => a * b, types.number),
-	'/': fn(({ value: a }, { value: b }) => a / b | 0, types.number)
-})
+let PRINT = (ast, human) => pr_str(ast, human)
 
 let rep = s => PRINT(EVAL(READ(s), repl_env), true)
+
+let repl_env = create_env()
+repl_env.initialize(core)
+
+let std = read('./std.mal', 'utf8').split(/\n+/)
+for (let line of std) {
+	EVAL(READ(line), repl_env)
+}
 
 while (true) {
 	let line = readline('user> ')

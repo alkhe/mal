@@ -1,4 +1,4 @@
-import types from './types'
+import types, { unit } from './types'
 
 export default (outer = null, binds = [], exprs = []) => {
 	let symbols = {}
@@ -25,7 +25,13 @@ export default (outer = null, binds = [], exprs = []) => {
 	}
 
 	for (let i = 0; i < binds.length; i++) {
-		env.set(binds[i], exprs[i])
+		let key = binds[i]
+		if (key === '&') {
+			env.set(binds[i + 1], unit(exprs.slice(i), types.list))
+			break
+		} else {
+			env.set(binds[i], exprs[i])
+		}
 	}
 
 	return env

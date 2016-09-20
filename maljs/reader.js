@@ -84,11 +84,12 @@ let read_vector = reader => {
 
 let read_map = reader => {
 	reader.next()
-	let map = {}
+	let map = []
 
 	for (let t = reader.peek(); t !== '}'; t = reader.peek()) {
-		let key = read_form(reader).value
-		map[key] = read_form(reader)
+		let Key = read_form(reader)
+		let Value = read_form(reader)
+		map.push([Key, Value])
 	}
 
 	reader.next()
@@ -182,7 +183,7 @@ let read_atom = reader => {
 	if (t[0] === '"') {
 		return unit(parse_string(t), types.string)
 	} else if (t[0] === ':') {
-		return unit('\u0000' + t, types.keyword)
+		return unit(t, types.keyword)
 	} else if (t.match(/^-?[0-9]+$/)) {
 		return unit(parseInt(t, 10), types.number)
 	} else {
