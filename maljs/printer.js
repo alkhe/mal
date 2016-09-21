@@ -20,7 +20,7 @@ let pr_str = ({ value, type }, human) => {
 				? serialize_string(value)
 				: value
 		case types.keyword:
-			return value.slice(1)
+			return value
 		case types.list:
 			return `(${ value.map(pr_consistent(human)).join(' ') })`
 		case types.vector:

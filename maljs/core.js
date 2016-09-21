@@ -88,6 +88,9 @@ let _deref = fn(({ value }) => value)
 let _reset = fn((atom, ast) => atom.value = ast)
 let _swap = fn((atom, { value: f }, ...args) => atom.value = f(atom.value, ...args))
 
+let _cons = fn((Head, { value: tail }) => [Head].concat(tail), types.list)
+let _concat = fn((...args) => args.reduce((acc, { value }) => acc.concat(value), []), types.list)
+
 export default {
 	'+': _add,
 	'-': _sub,
@@ -112,5 +115,7 @@ export default {
 	'atom?': _is_atom,
 	'deref': _deref,
 	'reset!': _reset,
-	'swap!': _swap
+	'swap!': _swap,
+	'cons': _cons,
+	'concat': _concat
 }
