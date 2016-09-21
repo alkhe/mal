@@ -13,7 +13,19 @@ let read_str = s => {
 		next: () => reader.tokens[reader.position++]
 	}
 
-	return reader.tokens.length > 0 ? read_form(reader) : $debug('')
+	let { length } = reader.tokens
+
+	if (length > 0) {
+		let asts = []
+
+		while (length !== reader.position) {
+			asts.push(read_form(reader))
+		}
+
+		return asts
+	}
+
+	return [$debug('')]
 }
 
 let tokenizer = s => {	
@@ -38,10 +50,16 @@ let read_form = reader => {
 			throw Error('got EOF')
 		case '(':
 			return read_list(reader)
+		case ')':
+			throw Error('unexpected )')
 		case '[':
 			return read_vector(reader)
+		case ']':
+			throw Error('unexpected ]')
 		case '{':
 			return read_map(reader)
+		case '}':
+			throw Error('unexpected }')
 		case '\'':
 			return read_quote(reader)
 		case '`':

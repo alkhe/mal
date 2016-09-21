@@ -4,13 +4,12 @@ import { readline } from './readline'
 import read_str from './reader'
 import pr_str from './printer'
 import types, { unit, fn, apply, falsy, listy,
-	$symbol, $nil, $string, $list, $userfn, $symbol_cmp } from './types'
+	$symbol, $nil, $string, $list, $vector, $map, $userfn, $symbol_cmp } from './types'
 import create_env from './env'
 import core from './core'
 
 let log = ::console.log
 let { argv, stdout } = process
-
 
 let READ = s => read_str(s)
 
@@ -20,15 +19,15 @@ let RESOLVE_AST = (ast, env) => {
 		case types.symbol:
 			return env.get(value)
 		case types.list:
-			return unit(value.map(x => EVAL(x, env)), type)
+			return $list(value.map(x => EVAL(x, env)))
 		case types.vector:
-			return unit(value.map(x => EVAL(x, env)), type)
+			return $vector(value.map(x => EVAL(x, env)))
 		case types.map:
-			let resolved = []
+			let map = []
 			for (let [K, V] of value) {
-				resolved.push([K, EVAL(V, env)])
+				map.push([K, EVAL(V, env)])
 			}
-			return unit(resolved, type)
+			return $map(map)
 		default:
 			return ast
 	}
@@ -52,12 +51,8 @@ let form_let = ([{ value: bindings }, Expr], env) => {
 }
 
 let form_do = (args, env) => {
-	let Statements = args.slice(0, args.length - 1)
-	let Expr = args[args.length - 1]
-	for (let s of Statements) {
-		EVAL(s, env)
-	}
-	return Expr
+	RESOLVE_AST($list(args.slice(0, -1)), env) // resolve inits
+	return args[args.length - 1] // last
 }
 
 let form_if = ([Cond_Expr, True_Expr, False_Expr], env) => {
@@ -116,7 +111,6 @@ let form_quasiquote = ast => {
 	return $list([$symbol('cons'), form_quasiquote(H), form_quasiquote($list(hargs))])
 }
 
-
 let EVAL = (ast, env) => {
 	while (true) {
 		if (ast.type === types.list) {
@@ -164,54 +158,42 @@ let EVAL = (ast, env) => {
 
 let PRINT = (ast, human) => pr_str(ast, human)
 
-let re = s => EVAL(READ(s), repl_env)
-let rep = s => PRINT(re(s), true)
+let re = s => READ(s).map(ast => EVAL(ast, repl_env))
+let rep = s => re(s).map(ast => PRINT(ast, true))
 
 let [script, ..._raw_argv] = argv.slice(2)
-
-let _eval = fn(ast => EVAL(ast, repl_env))
-let _argv = $list(_raw_argv.map($string))
 
 let repl_env = create_env()
 repl_env.initialize({
 	...core,
-	'eval': _eval,
-	'*ARGV*': _argv
+	'eval': fn(ast => EVAL(ast, repl_env)),
+	'*ARGV*': $list(_raw_argv.map($string))
 })
 
-re(`
-(defn load-file [f]
-	(eval (read-string
-		(str \`(do ~(slurp f))))))
-`)
+re('(defn load-file [f] (eval (read-string (str `(do ~(slurp f))))))')
 
-let include = filename => {
-	re(`(load-file "${ filename }")`)
-}
+let include = filename => re(`(load-file "${ filename }")`)
 
 include('./std.lisp')
-
-let run = line => {
-	try {
-		let result = rep(line)
-		if (result.length > 0) {
-			stdout.write(result + '\n')
-		}
-	} catch (err) {
-		stdout.write(err.message + '\n')
-		// stdout.write(err.stack + '\n')
-	}
-}
 
 if (script == null) {
 	while (true) {
 		let line = readline('user> ')
 		if (line == null) {
 			break
-		} else {
-			run(line)
+		}
+
+		try {
+			let result = rep(line).join(' ')
+			if (result.length > 0) {
+				stdout.write(result + '\n')
+			}
+		} catch (err) {
+			stdout.write(err.message + '\n')
+			// stdout.write(err.stack + '\n')
 		}
 	}
 } else {
 	include(script)
+	process.exit(0)
 }

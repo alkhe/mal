@@ -69,7 +69,7 @@ let _lte = fn(({ value: a }, { value: b }) => a <= b, types.bool)
 let _gt = fn(({ value: a }, { value: b }) => a > b, types.bool)
 let _gte = fn(({ value: a }, { value: b }) => a >= b, types.bool)
 
-let _read_string = fn(({ value }) => read_str(value))
+let _read_string = fn(({ value }) => read_str(value)[0])
 
 let _slurp = fn(({ value }) => read(value, 'utf8'), types.string)
 
