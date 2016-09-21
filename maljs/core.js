@@ -1,5 +1,8 @@
+import { readFileSync as read } from 'fs'
+
 import types, { fn, compose, apply, listy } from './types'
 import pr_str, { pretty, ugly } from './printer'
+import read_str from './reader'
 
 let print = s => console.log(s)
 
@@ -66,6 +69,10 @@ let _lte = fn(({ value: a }, { value: b }) => a <= b, types.bool)
 let _gt = fn(({ value: a }, { value: b }) => a > b, types.bool)
 let _gte = fn(({ value: a }, { value: b }) => a >= b, types.bool)
 
+let _read_string = fn(({ value }) => read_str(value))
+
+let _slurp = fn(({ value }) => read(value, 'utf8'), types.string)
+
 let _pr_str = fn((...args) => args.map(pretty).join(' '), types.string)
 let _str = fn((...args) => args.map(ugly).join(''), types.string)
 
@@ -75,7 +82,13 @@ let _println = compose(
 	_str_print
 )
 
-let ns = {
+let _atom = fn(ast => ast, types.atom)
+let _is_atom = fn(({ type }) => type === types.atom, types.bool)
+let _deref = fn(({ value }) => value)
+let _reset = fn((atom, ast) => atom.value = ast)
+let _swap = fn((atom, { value: f }, ...args) => atom.value = f(atom.value, ...args))
+
+export default {
 	'+': _add,
 	'-': _sub,
 	'*': _mul,
@@ -89,10 +102,15 @@ let ns = {
 	'<=': _lte,
 	'>': _gt,
 	'>=': _gte,
+	'read-string': _read_string,
+	'slurp': _slurp,
 	'pr-str': _pr_str,
 	'str': _str,
 	'prn': _prn,
-	'println': _println
+	'println': _println,
+	'atom': _atom,
+	'atom?': _is_atom,
+	'deref': _deref,
+	'reset!': _reset,
+	'swap!': _swap
 }
-
-export default ns

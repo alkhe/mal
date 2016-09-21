@@ -6,7 +6,6 @@ export let ugly = x => pr_str(x, false)
 let pr_consistent = human => x => pr_str(x, human)
 
 let pr_str = ({ value, type }, human) => {
-
 	switch (type) {
 		case types.symbol:
 			return value
@@ -38,6 +37,8 @@ let pr_str = ({ value, type }, human) => {
 		case types.fn:
 		case types.userfn:
 			return '#<function>'
+		case types.atom:
+			return `(atom ${ pr_str(value, human) })`
 		case types.debug:
 			return value
 		default:

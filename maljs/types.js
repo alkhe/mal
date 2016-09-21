@@ -12,6 +12,8 @@ let types = {
 	
 	fn: Symbol('fn'),
 	userfn: Symbol('userfn'),
+
+	atom: Symbol('atom'),
 	
 	debug: Symbol('debug')
 }

@@ -16,7 +16,7 @@ export default (outer = null, binds = [], exprs = []) => {
 			if (target_env != null) {
 				return target_env.unsafe_get(k)
 			} else {
-				throw `${ k } not found`
+				throw Error(`${ k } not found`)
 			}
 		},
 		unsafe_get: k => symbols[k],

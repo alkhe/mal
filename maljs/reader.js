@@ -10,7 +10,7 @@ let read_str = s => {
 		next: () => reader.tokens[reader.position++]
 	}
 
-	return reader.tokens.length > 0 ? read_form(reader) : ['', types.debug]
+	return reader.tokens.length > 0 ? read_form(reader) : unit('', types.debug)
 }
 
 let tokenizer = s => {	
