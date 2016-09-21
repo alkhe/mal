@@ -3,18 +3,14 @@ import { readFileSync as read } from 'fs'
 import { readline } from './readline'
 import read_str from './reader'
 import pr_str from './printer'
-import types, { unit, fn, apply, falsy, listy } from './types'
+import types, { unit, fn, apply, falsy, listy,
+	$symbol, $nil, $string, $list, $userfn, $symbol_cmp } from './types'
 import create_env from './env'
 import core from './core'
 
 let log = ::console.log
 let { argv, stdout } = process
 
-let $symbol = x => unit(x, types.symbol)
-let $symbol_cmp = (S, name) => S.type === types.symbol && S.value === name
-let $string = x => unit(x, types.string)
-let $list = x => unit(x, types.list)
-let $userfn = x => unit(x, types.userfn)
 
 let READ = s => read_str(s)
 

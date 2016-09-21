@@ -1,4 +1,7 @@
-import types, { unit } from './types'
+import types, {
+	$symbol, $number, $nil, $bool, $string, $keyword,
+	$list, $vector, $map,
+	$debug } from './types'
 
 let log = ::console.log
 
@@ -10,7 +13,7 @@ let read_str = s => {
 		next: () => reader.tokens[reader.position++]
 	}
 
-	return reader.tokens.length > 0 ? read_form(reader) : unit('', types.debug)
+	return reader.tokens.length > 0 ? read_form(reader) : $debug('')
 }
 
 let tokenizer = s => {	
@@ -66,7 +69,7 @@ let read_list = reader => {
 
 	reader.next()
 
-	return unit(elements, types.list)
+	return $list(elements)
 }
 
 let read_vector = reader => {
@@ -79,7 +82,7 @@ let read_vector = reader => {
 
 	reader.next()
 
-	return unit(elements, types.vector)
+	return $vector(elements)
 }
 
 let read_map = reader => {
@@ -94,45 +97,33 @@ let read_map = reader => {
 
 	reader.next()
 
-	return unit(map, types.map)
+	return $map(map)
 }
-
-let quote_node = unit('quote', types.symbol)
 
 let read_quote = reader => {
 	reader.next()
-	return unit([quote_node, read_form(reader)], types.list)
+	return $list([$symbol('quote'), read_form(reader)])
 }
-
-let quasiquote_node = unit('quasiquote', types.symbol)
 
 let read_quasiquote = reader => {
 	reader.next()
-	return unit([quasiquote_node, read_form(reader)], types.list)
+	return $list([$symbol('quasiquote'), read_form(reader)])
 }
-
-let unquote_node = unit('unquote', types.symbol)
 
 let read_unquote = reader => {
 	reader.next()
-	return unit([unquote_node, read_form(reader)], types.list)
+	return $list([$symbol('unquote'), read_form(reader)])
 }
-
-let splice_unquote_node = unit('splice-unquote', types.symbol)
 
 let read_splice_unquote = reader => {
 	reader.next()
-	return unit([splice_unquote_node, read_form(reader)], types.list)
+	return $list([$symbol('splice-unquote'), read_form(reader)])
 }
-
-let deref_node = unit('deref', types.symbol)
 
 let read_deref = reader => {
 	reader.next()
-	return unit([deref_node, read_form(reader)], types.list)
+	return $list([$symbol('deref'), read_form(reader)])
 }
-
-let with_meta_node = unit('with-meta', types.symbol)
 
 let read_with_meta = reader => {
 	reader.next()
@@ -140,7 +131,7 @@ let read_with_meta = reader => {
 	let meta = read_form(reader)
 	let obj = read_form(reader)
 
-	return unit([with_meta_node, obj, meta], types.list)
+	return $list([$symbol('with-meta'), obj, meta])
 }
 
 let parse_string = t => {
@@ -181,21 +172,21 @@ let read_atom = reader => {
 	let t = reader.next()
 
 	if (t[0] === '"') {
-		return unit(parse_string(t), types.string)
+		return $string(parse_string(t))
 	} else if (t[0] === ':') {
-		return unit(t, types.keyword)
+		return $keyword(t)
 	} else if (t.match(/^-?[0-9]+$/)) {
-		return unit(parseInt(t, 10), types.number)
+		return $number(parseInt(t, 10))
 	} else {
 		switch (t) {
 			case 'nil':
-				return unit(null, types.nil)
+				return $nil(null)
 			case 'true':
-				return unit(true, types.bool)
+				return $bool(true)
 			case 'false':
-				return unit(false, types.bool)
+				return $bool(false)
 			default:
-				return unit(t, types.symbol)
+				return $symbol(t)
 		}
 	}
 }
