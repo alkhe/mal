@@ -6,7 +6,7 @@ import read_str from './reader'
 
 let print = s => console.log(s)
 
-let _str_print = fn(({ value: s }) => {
+let __print = fn(({ value: s }) => {
 	print(s)
 	return null
 }, types.nil)
@@ -76,10 +76,10 @@ let _slurp = fn(({ value }) => read(value, 'utf8'), types.string)
 let _pr_str = fn((...args) => args.map(pretty).join(' '), types.string)
 let _str = fn((...args) => args.map(ugly).join(''), types.string)
 
-let _prn = compose(_pr_str, _str_print)
+let _prn = compose(_pr_str, __print)
 let _println = compose(
 	fn((...args) => args.map(ugly).join(' '), types.nil),
-	_str_print
+	__print
 )
 
 let _atom = fn(ast => ast, types.atom)
@@ -117,5 +117,7 @@ export default {
 	'reset!': _reset,
 	'swap!': _swap,
 	'cons': _cons,
-	'concat': _concat
+	'concat': _concat,
+
+	'internal/print': __print
 }

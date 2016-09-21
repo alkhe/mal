@@ -179,7 +179,11 @@ repl_env.initialize({
 	'*ARGV*': _argv
 })
 
-re(`(defn load-file [f] (eval (read-string (str "(do " (slurp f) ")"))))`)
+re(`
+(defn load-file [f]
+	(eval (read-string
+		(str \`(do ~(slurp f))))))
+`)
 
 let include = filename => {
 	re(`(load-file "${ filename }")`)
