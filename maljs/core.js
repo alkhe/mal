@@ -1,9 +1,10 @@
 import { readFileSync as read } from 'fs'
 
 import types, { fn, compose, apply, listy,
-	$symbol, $keyword, $nil, $list, $vector, $ref, enkey, dekey } from './types'
+	$symbol, $string, $keyword, $nil, $list, $vector, $map, enkey, dekey } from './types'
 import pr_str, { pretty, ugly } from './printer'
 import read_str from './reader'
+import readline from './readline'
 
 let print = s => console.log(s)
 
@@ -35,15 +36,20 @@ let _keyword = fn(S =>
 let _list = fn((...args) => args, types.list)
 let _vector = fn((...args) => args, types.vector)
 
+let _atom = fn(ast => ast, types.atom)
+
 let _is_nil = fn(x => x.type === types.nil, types.bool)
 let _is_true = fn(x => x.value === true, types.bool)
 let _is_false = fn(x => x.value === false, types.bool)
 let _is_keyword = fn(x => x.type === types.keyword, types.bool)
+let _is_string = fn(x => x.type === types.string, types.bool)
 let _is_symbol = fn(x => x.type === types.symbol, types.bool)
 
 let _is_list = fn(x => x.type === types.list, types.bool)
 let _is_vector = fn(x => x.type === types.vector, types.bool)
 let _is_map = fn(x => x.type === types.map, types.bool)
+
+let _is_atom = fn(({ type }) => type === types.atom, types.bool)
 
 let _is_sequential = fn(x => listy(x.type), types.bool)
 let _is_empty = fn(({ value, type }) => (type === types.nil) || (value.length === 0), types.bool)
@@ -148,8 +154,8 @@ let _println = compose(
 	__print
 )
 
-let _atom = fn(ast => ast, types.atom)
-let _is_atom = fn(({ type }) => type === types.atom, types.bool)
+let __chars = fn(S => S.value.split('').map($string), types.list)
+
 let _deref = fn(({ value }) => value)
 let _reset = fn((atom, ast) => atom.value = ast)
 let _swap = fn((atom, { value: f }, ...args) => atom.value = f(atom.value, ...args))
@@ -181,6 +187,19 @@ let _apply = fn((F, ...args) => {
 
 let _map = fn((F, L) => L.value.map(F.value), types.list)
 
+let _readline = fn(P => {
+	let line = readline(P.value)
+	if (line == null) {
+		return $nil(null)
+	}
+	return $string(line)
+})
+
+let _with_meta = fn((O, Meta) => ({ ...O, meta: Meta }))
+let _meta = fn(O => O.meta)
+
+let _time_ms = fn(::Date.now, types.number)
+
 export default {
 	'+': _add,
 	'-': _sub,
@@ -195,6 +214,7 @@ export default {
 	'nil?': _is_nil,
 	'true?': _is_true,
 	'false?': _is_false,
+	'string?': _is_string,
 	'keyword?': _is_keyword,
 	'list?': _is_list,
 	'vector?': _is_vector,
@@ -231,8 +251,13 @@ export default {
 	'throw': _throw,
 	'apply': _apply,
 	'map': _map,
+	'readline': _readline,
+	'with-meta': _with_meta,
+	'meta': _meta,
+	'time-ms': _time_ms,
 
 	'internal/enkey': fn(enkey, types.ref),
 	'internal/dekey': fn(x => dekey(x.value), types.ref),
-	'internal/print': __print
+	'internal/print': __print,
+	'internal/chars': __chars
 }

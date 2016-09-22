@@ -19,7 +19,7 @@ let types = {
 	debug: Symbol('debug')
 }
 
-export let unit = (value, type) => ({ value, type })
+export let unit = (value, type) => ({ value, type, meta: Nil })
 
 let ctor = t => x => unit(x, t)
 
@@ -37,6 +37,8 @@ export let $userfn = ctor(types.userfn)
 export let $atom = ctor(types.atom)
 export let $ref = ctor(types.ref)
 export let $debug = ctor(types.debug)
+
+export let Nil = $nil(null)
 
 export let fn = (lambda, type) =>
 	type != null

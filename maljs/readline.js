@@ -13,7 +13,7 @@ var rllib = ffi.Library(RL_LIB, {
 
 var rl_history_loaded = false;
 
-export function readline(prompt) {
+export default prompt => {
     prompt = prompt || "user> ";
 
     if (!rl_history_loaded) {
