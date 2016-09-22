@@ -17,3 +17,6 @@
 				(if o
 					o
 					(or ~@(rest l)))))))
+
+(defn hash-map [& l]
+	  (apply assoc {} l))

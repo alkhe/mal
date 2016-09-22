@@ -1,4 +1,4 @@
-import types from './types'
+import types, { dekey } from './types'
 
 export let pretty = x => pr_str(x, true)
 export let ugly = x => pr_str(x, false)
@@ -20,16 +20,16 @@ let pr_str = ({ value, type }, human) => {
 				? serialize_string(value)
 				: value
 		case types.keyword:
-			return value
+			return ':' + value
 		case types.list:
 			return `(${ value.map(pr_consistent(human)).join(' ') })`
 		case types.vector:
 			return `[${ value.map(pr_consistent(human)).join(' ') }]`
 		case types.map:
 			let serials = []
-			for (let [K, V] of value) {
+			for (let [k, V] of value) {
 				serials.push(
-					serialize_key(K),
+					pr_str(dekey(k), true),
 					pr_str(V, human)
 				)
 			}
@@ -45,11 +45,6 @@ let pr_str = ({ value, type }, human) => {
 			throw Error('bad AST')
 	}
 }
-
-let serialize_key = ({ value, type }) =>
-	type === types.keyword
-		? value
-		: serialize_string(value)
 
 let serialize_string = s => {
 	let output = '"'

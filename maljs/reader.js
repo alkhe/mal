@@ -192,7 +192,10 @@ let read_atom = reader => {
 	if (t[0] === '"') {
 		return $string(parse_string(t))
 	} else if (t[0] === ':') {
-		return $keyword(t)
+		if (t.length < 2) {
+			throw Error('bare colon')
+		}
+		return $keyword(t.slice(1))
 	} else if (t.match(/^-?[0-9]+$/)) {
 		return $number(parseInt(t, 10))
 	} else {

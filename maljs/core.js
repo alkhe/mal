@@ -1,7 +1,7 @@
 import { readFileSync as read } from 'fs'
 
 import types, { fn, compose, apply, listy,
-	$nil, $list } from './types'
+	$symbol, $keyword, $nil, $list, $vector, $ref, enkey, dekey } from './types'
 import pr_str, { pretty, ugly } from './printer'
 import read_str from './reader'
 
@@ -15,12 +15,80 @@ let __print = fn(({ value: s }) => {
 let _add = fn(({ value: a }, { value: b }) => a + b, types.number)
 let _sub = fn(({ value: a }, { value: b }) => a - b, types.number)
 let _mul = fn(({ value: a }, { value: b }) => a * b, types.number)
-let _div = fn(({ value: a }, { value: b }) => a / b | 0, types.number)
+let _div = fn(({ value: a }, { value: b }) => {
+	if (b === 0) {
+		throw Error('division by zero')
+	}
+	let quotient = a / b
+	if (!Number.isFinite(quotient)) {
+		throw Error('not a finite inumber')
+	}
+	return quotient | 0
+}, types.number)
 
+let _symbol = fn(({ value }) => $symbol(value))
+let _keyword = fn(S =>
+	S.type === types.keyword
+		? S
+		: $keyword(S.value)
+)
 let _list = fn((...args) => args, types.list)
-let _is_list = fn(({ type }) => type === types.list, types.bool)
+let _vector = fn((...args) => args, types.vector)
+
+let _is_nil = fn(x => x.type === types.nil, types.bool)
+let _is_true = fn(x => x.value === true, types.bool)
+let _is_false = fn(x => x.value === false, types.bool)
+let _is_keyword = fn(x => x.type === types.keyword, types.bool)
+let _is_symbol = fn(x => x.type === types.symbol, types.bool)
+
+let _is_list = fn(x => x.type === types.list, types.bool)
+let _is_vector = fn(x => x.type === types.vector, types.bool)
+let _is_map = fn(x => x.type === types.map, types.bool)
+
+let _is_sequential = fn(x => listy(x.type), types.bool)
 let _is_empty = fn(({ value, type }) => (type === types.nil) || (value.length === 0), types.bool)
 let _count = fn(({ value, type }) => type === types.nil ? 0 : value.length, types.number)
+
+let _contains = fn(({ value: map, type }, K) => {
+	if (type === types.nil) {
+		return $nil(null)
+	}
+	return map.has(enkey(K))
+}, types.bool)
+let _keys = fn(({ value: map, type }) => {
+	if (type === types.nil) {
+		return $nil(null)
+	}
+	return $list(Array.from(map.keys()).map(dekey))
+})
+let _vals = fn(({ value: map, type }) => {
+	if (type === types.nil) {
+		return $nil(null)
+	}
+	return $list(Array.from(map.values()))
+})
+let _assoc = fn(({ value: old_map }, ...args) => {
+	let map = new Map(old_map)
+	for (let i = 0; i < args.length; i++) {
+		map.set(enkey(args[i]), args[i + 1])
+		i++
+	}
+	return map
+}, types.map)
+let _dissoc = fn(({ value: old_map }, ...keysources) => {
+	let map = new Map(old_map)
+	for (let ks of keysources) {
+		map.delete(enkey(ks))
+	}
+	return map
+}, types.map)
+let _get = fn(({ value: map, type }, K) => {
+	if (type === types.nil) {
+		return $nil(null)
+	}
+	let key = enkey(K)
+	return map.has(key) ? map.get(key) : $nil(null)
+})
 
 let _equals_type = fn(({ type: at }, { type: bt }) => at === bt, types.bool)
 let _equals = fn(
@@ -44,15 +112,12 @@ let _equals = fn(
 
 			return true
 		} else if (at === types.map) {
-			if (a.length !== b.length) {
+			if (Array.from(a.keys()).length !== Array.from(b.keys()).length) {
 				return false
 			}
 
-			for (let i = 0; i < a.length; i++) {
-				if (
-					!apply(_equals, a[i][0], b[i][0]) ||
-					!apply(_equals, a[i][1], b[i][1])
-				) {
+			for (let [k, V] of a) {
+				if (!apply(_equals, V, b.get(k))) {
 					return false
 				}
 			}
@@ -105,19 +170,45 @@ let _first = fn(({ value, type }) =>
 )
 let _rest = fn(({ value, type }) => $list(type === types.nil ? [] : value.slice(1)))
 
-let _throw = fn(({ value }) => {
-	throw Error(value)
+let _throw = fn(object => {
+	throw object
 })
+
+let _apply = fn((F, ...args) => {
+	let fargs = args.slice(0, -1).concat(args[args.length - 1].value)
+	return F.value(...fargs)
+})
+
+let _map = fn((F, L) => L.value.map(F.value), types.list)
 
 export default {
 	'+': _add,
 	'-': _sub,
 	'*': _mul,
 	'/': _div,
+	'symbol': _symbol,
+	'keyword': _keyword,
 	'list': _list,
+	'vector': _vector,
+	'atom': _atom,
+	'symbol?': _is_symbol,
+	'nil?': _is_nil,
+	'true?': _is_true,
+	'false?': _is_false,
+	'keyword?': _is_keyword,
 	'list?': _is_list,
+	'vector?': _is_vector,
+	'map?': _is_map,
+	'atom?': _is_atom,
+	'sequential?': _is_sequential,
 	'empty?': _is_empty,
 	'count': _count,
+	'contains?': _contains,
+	'keys': _keys,
+	'vals': _vals,
+	'assoc': _assoc,
+	'dissoc': _dissoc,
+	'get': _get,
 	'=': _equals,
 	'<': _lt,
 	'<=': _lte,
@@ -129,8 +220,6 @@ export default {
 	'str': _str,
 	'prn': _prn,
 	'println': _println,
-	'atom': _atom,
-	'atom?': _is_atom,
 	'deref': _deref,
 	'reset!': _reset,
 	'swap!': _swap,
@@ -140,6 +229,10 @@ export default {
 	'first': _first,
 	'rest': _rest,
 	'throw': _throw,
+	'apply': _apply,
+	'map': _map,
 
+	'internal/enkey': fn(enkey, types.ref),
+	'internal/dekey': fn(x => dekey(x.value), types.ref),
 	'internal/print': __print
 }

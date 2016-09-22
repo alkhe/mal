@@ -4,7 +4,7 @@ import { readline } from './readline'
 import read_str from './reader'
 import pr_str from './printer'
 import types, { unit, fn, apply, falsy, listy,
-	$symbol, $nil, $string, $list, $vector, $map, $userfn, $symbol_cmp } from './types'
+	$symbol, $nil, $string, $list, $vector, $map, $userfn, $symbol_cmp, enkey } from './types'
 import create_env from './env'
 import core from './core'
 
@@ -23,9 +23,9 @@ let RESOLVE_AST = (ast, env) => {
 		case types.vector:
 			return $vector(value.map(x => EVAL(x, env)))
 		case types.map:
-			let map = []
+			let map = new Map
 			for (let [K, V] of value) {
-				map.push([K, EVAL(V, env)])
+				map.set(enkey(K), EVAL(V, env))
 			}
 			return $map(map)
 		default:
@@ -114,12 +114,11 @@ let form_if = ([Cond_Expr, True_Expr, False_Expr], env) => {
 let is_pair = ({ value, type }) => listy(type) && value.length > 0
 
 let form_quasiquote = ast => {
-	let contents = ast.value
-
 	if (!is_pair(ast)) {
 		return $list([$symbol('quote'), ast])
 	}
-
+	
+	let contents = ast.value
 	let [H, ...tail] = contents
 	let { value: h } = H
 
@@ -134,9 +133,9 @@ let form_quasiquote = ast => {
 	return $list([$symbol('cons'), form_quasiquote(H), form_quasiquote($list(tail))])
 }
 
-let is_macro_call = (ast, env) => {
-	if (ast.type === types.list && ast.value.length > 0) {
-		let [Head] = ast.value
+let is_macro_call = ({ type, value }, env) => {
+	if (type === types.list && value.length > 0) {
+		let [Head] = value
 		if (Head.type === types.symbol) {
 			let target_env = env.find(Head.value)
 			if (target_env != null) {
@@ -156,6 +155,26 @@ let form_macroexpand = (ast, env) => {
 	}
 	return ast
 }
+
+// implementing TCO is extremely tempting but unfeasible
+let form_try_mal = (args, env) => {
+	if (args.length === 0) {
+		return $nil(null)
+	} else if (args.length === 1) {
+		return EVAL(args[0], env)
+	} else {
+		let [Expr, Catch] = args
+		try {
+			return EVAL(Expr, env)
+		} catch (e) {
+			let [Sym, Expr] = EVAL(Catch, env).value
+			let child_env = create_env(env, [Sym], [e.message ? $string(e.message) : e])
+			return EVAL(Expr, child_env)
+		}
+	}
+}
+
+let form_catch_mal = ([{ value: Sym }, Expr], env) => $list([Sym, Expr])
 
 let EVAL = (ast, env) => {
 	while (true) {
@@ -190,6 +209,10 @@ let EVAL = (ast, env) => {
 						continue
 					case 'macroexpand':
 						return form_macroexpand(args[0], env)
+					case 'try*':
+						return form_try_mal(args, env)
+					case 'catch*':
+						return form_catch_mal(args, env)
 					default:
 						let [{ value: f, type }, ...resolved_args] = RESOLVE_AST(ast, env).value
 						if (type === types.userfn) {
