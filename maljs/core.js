@@ -1,6 +1,7 @@
 import { readFileSync as read } from 'fs'
 
-import types, { fn, compose, apply, listy } from './types'
+import types, { fn, compose, apply, listy,
+	$nil, $list } from './types'
 import pr_str, { pretty, ugly } from './printer'
 import read_str from './reader'
 
@@ -91,6 +92,23 @@ let _swap = fn((atom, { value: f }, ...args) => atom.value = f(atom.value, ...ar
 let _cons = fn((Head, { value: tail }) => [Head].concat(tail), types.list)
 let _concat = fn((...args) => args.reduce((acc, { value }) => acc.concat(value), []), types.list)
 
+let _nth = fn(({ value: list }, { value: index }) => {
+	if (index < list.length) {
+		return list[index]
+	}
+	throw Error('out of bounds')
+})
+let _first = fn(({ value, type }) =>
+	type === types.nil || value.length === 0
+		? $nil(null)
+		: value[0]
+)
+let _rest = fn(({ value, type }) => $list(type === types.nil ? [] : value.slice(1)))
+
+let _throw = fn(({ value }) => {
+	throw Error(value)
+})
+
 export default {
 	'+': _add,
 	'-': _sub,
@@ -118,6 +136,10 @@ export default {
 	'swap!': _swap,
 	'cons': _cons,
 	'concat': _concat,
+	'nth': _nth,
+	'first': _first,
+	'rest': _rest,
+	'throw': _throw,
 
 	'internal/print': __print
 }
